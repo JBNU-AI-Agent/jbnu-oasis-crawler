@@ -1,24 +1,29 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 from app.core.config import settings
-from app.core.database import Base, engine
+from app.core.mongodb import connect_to_mongo, close_mongo_connection
 from app.utils import setup_logging
 from app.middleware import LoggingMiddleware
-from app.api.routers import items, users
-from app.exceptions.handlers import add_exception_handlers
+from app.routers import crawler
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # 시작 시: DB 연결
+    await connect_to_mongo()
+    yield
+    # 종료 시: 연결 해제
+    await close_mongo_connection()
 
 def create_app() -> FastAPI:
     # 로깅 초기화
     setup_logging()
 
-    # 데이터베이스 테이블 생성
-    Base.metadata.create_all(bind=engine)
-
     app = FastAPI(
         title=settings.APP_NAME,
         version=settings.APP_VERSION,
         debug=settings.DEBUG,
+        lifespan=lifespan
     )
 
     # 미들웨어 등록 (역순으로 실행됨)
@@ -32,11 +37,8 @@ def create_app() -> FastAPI:
     )
 
     # 라우터 등록
-    app.include_router(items.router, prefix="/items", tags=["items"])
-    app.include_router(users.router, prefix="/users", tags=["users"])
-
+    app.include_router(crawler.router, prefix="/oasis", tags=["oasis-crawler"])
     # 예외 핸들러 등록
-    add_exception_handlers(app)
 
     return app
 

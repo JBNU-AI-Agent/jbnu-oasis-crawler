@@ -11,7 +11,7 @@ class BaseResponse(BaseModel, Generic[T]):
     message: Optional[str] = None
 
 
-class SuccessResponse(BaseResponse[T], Generic[T]):
+class SuccessResponse(BaseResponse[T]):
     """성공 응답"""
     status: str = "success"
 

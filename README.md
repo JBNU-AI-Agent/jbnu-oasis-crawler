@@ -1,235 +1,133 @@
-# FastAPI Layered Architecture Template
+# OASIS LMS 크롤러 서비스
 
-FastAPI를 사용한 클린 아키텍처 템플릿입니다. 레이어 분리, 의존성 주입, 예외 처리 등 모범 사례를 적용했습니다.
+이 프로젝트는 대학의 OASIS 시스템에서 학생 정보와 성적 데이터를 크롤링하고 관리하기 위해 설계된 FastAPI 기반의 백엔드 서비스입니다. 외부 OASIS 시스템의 데이터를 로컬 MongoDB 데이터베이스로 동기화하고 효율적으로 조회할 수 있는 RESTful API를 제공합니다.
 
-## 🏗️ 아키텍처
+## 🚀 주요 기능
 
-```
-app/
-├── api/                # Presentation Layer
-│   ├── routers/        # API 엔드포인트
-│   └── dependencies.py # 의존성 주입
-├── services/           # Business Logic Layer
-├── repositories/       # Data Access Layer
-├── models/             # Database Models (SQLAlchemy ORM)
-├── schemas/            # Pydantic Schemas (DTO)
-├── core/               # 핵심 설정
-│   ├── config.py       # 환경 설정
-│   └── database.py     # DB 연결
-├── middleware/         # HTTP 미들웨어
-│   └── logging_middleware.py
-├── utils/              # 유틸리티
-│   └── logging.py      # 로깅 설정
-├── exceptions/         # Custom Exceptions & Handlers
-└── main.py             # Application Entry Point
-```
+- **인증 (Authentication)**: OASIS 시스템에 로그인하여 세션 쿠키를 발급받습니다.
+- **학생 정보 동기화**: 학생의 개인 정보를 크롤링하여 데이터베이스에 동기화합니다.
+- **성적/학점 동기화**: 학업 성적 및 학점 정보를 크롤링하여 데이터베이스에 동기화합니다.
+- **데이터 조회**: MongoDB에 저장된 학생 및 성적 데이터를 빠르게 조회합니다.
+- **비동기 아키텍처**: `FastAPI`와 `Motor` (비동기 MongoDB 드라이버)를 사용하여 고성능을 보장합니다.
+- **계층형 아키텍처 (Layered Architecture)**: 유지보수성을 위해 라우터(Router), 서비스(Service), 리포지토리(Repository), 크롤러(Crawler) 계층으로 구조화되었습니다.
 
-## ✨ 주요 특징
+## 🛠️ 기술 스택
 
-- **레이어 분리**: API, Service, Repository 레이어로 명확히 분리
-- **의존성 주입**: FastAPI의 Depends를 활용한 DI 패턴
-- **예외 처리**: 커스텀 예외와 전역 예외 핸들러
-- **타입 안정성**: Pydantic을 통한 요청/응답 검증
-- **환경 설정**: 환경변수를 통한 설정 관리
-- **로깅 시스템**: 요청/응답 자동 로깅 미들웨어
-- **CORS 지원**: 환경변수로 설정 가능한 CORS
-- **Docker 지원**: Dockerfile 포함
+- **프레임워크**: [FastAPI](https://fastapi.tiangolo.com/)
+- **데이터베이스**: [MongoDB](https://www.mongodb.com/)
+- **ODM/드라이버**: [Motor](https://motor.readthedocs.io/) (Async), [PyMongo](https://pymongo.readthedocs.io/)
+- **크롤링**: `requests`, `lxml`
+- **검증**: [Pydantic](https://docs.pydantic.dev/)
+- **컨테이너화**: Docker, Docker Compose
 
-## 📋 요구사항
-
-- Python 3.12+
-- FastAPI
-- SQLAlchemy
-- Pydantic v2
-
-## 🚀 시작하기
-
-### 1. 저장소 클론
+## 📂 프로젝트 구조
 
 ```bash
-git clone https://github.com/your-username/fastapi-webservice.git
-cd fastapi-webservice
+lms-crawler/
+├── app/
+│   ├── core/           # 설정 및 DB 연결
+│   ├── crawlers/       # 스크래핑 로직 (Base, Student, Score)
+│   ├── middleware/     # 커스텀 미들웨어 (Logging 등)
+│   ├── models/         # 데이터베이스 모델
+│   ├── repositories/   # DB 접근 계층
+│   ├── routers/        # API 라우트 정의
+│   ├── schemas/        # Pydantic 스키마 (요청/응답)
+│   ├── services/       # 비즈니스 로직
+│   ├── utils/          # 유틸리티 함수
+│   ├── main.py         # 앱 진입점
+│   └── __init__.py
+├── .dockerignore
+├── .env.example
+├── .gitignore
+├── docker-compose.yml
+├── Dockerfile
+├── pyproject.toml
+├── requirements.txt
+└── README.md
 ```
 
-### 2. 가상환경 생성 및 활성화
+## 📋 사전 요구 사항
 
-```bash
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-```
+- Python 3.12 이상
+- MongoDB (로컬 또는 Atlas)
+- Docker & Docker Compose (선택 사항, 컨테이너 배포 시)
 
-### 3. 의존성 설치
+## ⚙️ 설치 및 설정
 
-```bash
-pip install -r requirements.txt
-```
+### 1. 로컬 개발 환경
 
-### 4. 환경 변수 설정
+1.  **저장소 복제 (Clone)**
+    ```bash
+    git clone <repository-url>
+    cd lms_cralwer
+    ```
 
-`.env` 파일을 생성하고 필요한 설정을 추가합니다:
+2.  **가상 환경 생성**
+    ```bash
+    python -m venv venv
+    source venv/bin/activate  # Windows의 경우: venv\Scripts\activate
+    ```
 
-```bash
-cp .env.example .env
-```
+3.  **의존성 설치**
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-`.env` 파일 예시:
-```env
-DATABASE_URL=sqlite:///./test.db
-DEBUG=True
-LOG_LEVEL=DEBUG
-CORS_ORIGINS=["http://localhost:3000"]
-```
+4.  **환경 변수 설정**
+    루트 디렉토리에 `.env` 파일을 생성합니다 (`.env.example` 참고):
+    ```ini
+    APP_NAME="LMS Crawler"
+    APP_VERSION="0.1.0"
+    DEBUG=True
+    
+    # MongoDB 설정
+    MONGODB_URL="mongodb://localhost:27017"
+    MONGODB_DB_NAME="oasis_db"
+    
+    # 로깅 설정
+    LOG_LEVEL="DEBUG"
+    ```
 
-### 5. 애플리케이션 실행
+5.  **애플리케이션 실행**
+    ```bash
+    uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+    ```
 
-```bash
-uvicorn app.main:app --reload
-```
+### 2. Docker 배포
 
-API 문서: http://localhost:8000/docs
+1.  위와 같이 `.env` 파일을 설정합니다.
+2.  **컨테이너 빌드 및 실행**
+    ```bash
+    docker-compose up --build -d
+    ```
 
-## 🐳 Docker로 실행
+API는 `http://localhost:8080`에서 접속 가능합니다.
 
-```bash
-docker build -t fastapi-webservice .
-docker run -p 8000:8000 fastapi-webservice
-```
+## 🔌 API 엔드포인트
 
-## 📚 API 엔드포인트
+모든 엔드포인트의 기본 경로는 `/oasis`입니다.
 
-### Items
+### 인증 (Authentication)
+- `POST /oasis/auth/session`: 사용자 ID, 비밀번호, OTP로 로그인하여 세션 쿠키를 획득합니다.
 
-- `POST /items/` - 아이템 생성
-- `GET /items/` - 아이템 목록 조회 (페이지네이션)
-- `GET /items/{item_id}` - 특정 아이템 조회
-- `PUT /items/{item_id}` - 아이템 수정
-- `DELETE /items/{item_id}` - 아이템 삭제
+### 학생 정보 (Student Information)
+- `POST /oasis/student/info/sync`: OASIS에서 학생 정보를 크롤링하여 DB에 동기화합니다 (쿠키 필요).
+- `GET /oasis/student/info/{std_no}`: DB에 저장된 학생 정보를 조회합니다.
 
-## 🗂️ 프로젝트 구조 설명
+### 성적/학점 (Academic Credits)
+- `POST /oasis/credits/sync`: OASIS에서 성적 정보를 크롤링하여 DB에 동기화합니다 (쿠키 필요).
+- `GET /oasis/credits/{std_no}`: DB에 저장된 성적 정보를 조회합니다.
 
-### API Layer (`app/api/`)
-- HTTP 요청/응답 처리
-- 라우팅 및 엔드포인트 정의
-- 의존성 주입을 통한 서비스 연결
+## 📝 사용 흐름
 
-### Service Layer (`app/services/`)
-- 비즈니스 로직 구현
-- 트랜잭션 관리
-- 예외 발생 및 처리
+1.  **로그인**: `/auth/session`을 호출하여 자격 증명을 제공하고 세션 쿠키를 받습니다.
+2.  **데이터 동기화**: 받은 쿠키와 학번(`std_no`)을 사용하여 `/student/info/sync` 또는 `/credits/sync`를 호출합니다. 이 과정에서 학교 포털의 데이터를 스크래핑하고 MongoDB를 업데이트합니다.
+3.  **데이터 조회**: `/student/info/{std_no}` 또는 `/credits/{std_no}`를 사용하여 다시 크롤링할 필요 없이 데이터베이스에 캐시된 데이터를 즉시 조회합니다.
 
-### Repository Layer (`app/repositories/`)
-- 데이터베이스 쿼리
-- ORM 작업
-- 데이터 접근 추상화
+## 🤝 기여하기 (Contributing)
 
-### Models (`app/models/`)
-- SQLAlchemy ORM 모델
-- 데이터베이스 테이블 정의
-
-### Schemas (`app/schemas/`)
-- Pydantic 모델
-- 요청/응답 데이터 검증
-- 직렬화/역직렬화
-
-### Middleware (`app/middleware/`)
-- HTTP 요청/응답 처리 미들웨어
-- 로깅, 인증, 에러 처리 등
-
-### Utils (`app/utils/`)
-- 공통 유틸리티 함수
-- 로깅 설정, 헬퍼 함수 등
-
-## 🔧 설정
-
-`app/core/config.py`에서 애플리케이션 설정을 관리합니다.
-
-```python
-class Settings(BaseSettings):
-    APP_NAME: str = "FastAPI Layered Architecture"
-    APP_VERSION: str = "0.1.0"
-    DEBUG: bool = True
-    DATABASE_URL: str = "sqlite:///./test.db"
-    LOG_LEVEL: str = "DEBUG"
-    CORS_ORIGINS: List[str] = ["http://localhost:3000"]
-```
-
-환경변수나 `.env` 파일로 설정을 오버라이드할 수 있습니다.
-
-## 📝 로깅
-
-요청/응답이 자동으로 로깅됩니다:
-
-```
-2025-01-15 10:30:00 | INFO     | → GET /items/
-2025-01-15 10:30:00 | INFO     | ← 200 (12.34ms)
-```
-
-로그 레벨 설정:
-```env
-LOG_LEVEL=DEBUG   # 개발 환경
-LOG_LEVEL=INFO    # 프로덕션 환경
-LOG_LEVEL=WARNING # 경고 이상만
-```
-
-## 🌐 CORS 설정
-
-프론트엔드 연동을 위한 CORS 설정:
-
-```env
-CORS_ORIGINS=["http://localhost:3000", "https://your-domain.com"]
-CORS_ALLOW_CREDENTIALS=True
-CORS_ALLOW_METHODS=["*"]
-CORS_ALLOW_HEADERS=["*"]
-```
-
-## 🗃️ 데이터베이스
-
-### 기본 설정
-기본적으로 SQLite를 사용합니다.
-
-### PostgreSQL 사용
-```env
-DATABASE_URL=postgresql://user:password@localhost/dbname
-```
-
-### MySQL 사용
-```env
-DATABASE_URL=mysql+pymysql://user:password@localhost/dbname
-```
-
-requirements.txt에 해당 드라이버를 추가해야 합니다:
-- PostgreSQL: `psycopg2-binary`
-- MySQL: `pymysql`
-
-## 🧪 새로운 엔티티 추가하기
-
-1. **Model 생성** (`app/models/your_model.py`)
-2. **Schema 정의** (`app/schemas/your_schema.py`)
-3. **Repository 구현** (`app/repositories/your_repository.py`)
-4. **Service 작성** (`app/services/your_service.py`)
-5. **Router 추가** (`app/api/routers/your_router.py`)
-6. **main.py에 라우터 등록**
-
-## 📝 개발 가이드
-
-### 레이어 간 의존성 규칙
-- API → Service → Repository → Model
-- 상위 레이어만 하위 레이어를 참조
-- 하위 레이어는 상위 레이어를 알지 못함
-
-### 예외 처리
-- Service 레이어에서 비즈니스 예외 발생
-- `app/exceptions/`에 커스텀 예외 정의
-- `handlers.py`에서 전역 핸들러 등록
-
-## 🤝 기여
-
-이슈와 풀 리퀘스트를 환영합니다!
-
-## 📄 라이선스
-
-MIT License
-
-## 👤 작성자
-
-Your Name - [@your_username](https://github.com/your_username)
+1. 이 프로젝트를 포크합니다 (Fork).
+2. 새로운 기능 브랜치를 생성합니다 (`git checkout -b feature/AmazingFeature`).
+3. 변경 사항을 커밋합니다 (`git commit -m 'Add some AmazingFeature'`).
+4. 브랜치에 푸시합니다 (`git push origin feature/AmazingFeature`).
+5. 풀 리퀘스트(Pull Request)를 엽니다.

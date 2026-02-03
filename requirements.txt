@@ -7,3 +7,8 @@ python-multipart
 SQLAlchemy
 pyjwt
 passlib[bcrypt]
+requests
+lxml
+motor 
+dnspython
+pymongo[srv]==3.12

@@ -23,7 +23,9 @@ def setup_logging() -> logging.Logger:
     # 외부 라이브러리 로그 레벨 조정
     logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
     logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
-
+    logging.getLogger("urllib3.connection").setLevel(logging.ERROR)
+    logging.getLogger("pymongo").setLevel(logging.WARNING)
+    
     logger = logging.getLogger("app")
     logger.info(f"로깅 설정 완료 (level: {logging.getLevelName(log_level)})")
 

@@ -6,12 +6,10 @@ class Settings(BaseSettings):
     APP_NAME: str = "FastAPI Layered Architecture"
     APP_VERSION: str = "0.1.0"
     DEBUG: bool = True
-
-    # Database
-    DATABASE_URL: str = "sqlite:///./test.db"
-    # PostgreSQL 예시: "postgresql://user:password@localhost/dbname"
-    # MySQL 예시: "mysql+pymysql://user:password@localhost/dbname"
-
+    
+    MONGODB_URL: str
+    MONGODB_DB_NAME: str
+    
     # Logging
     LOG_LEVEL: str = "DEBUG"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
 
