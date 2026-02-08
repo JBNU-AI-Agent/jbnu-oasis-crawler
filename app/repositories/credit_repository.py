@@ -1,9 +1,11 @@
-from motor.motor_asyncio import AsyncIOMotorDatabase
-from typing import List
+from typing import List, Any
 from datetime import datetime
+from fastapi import Depends
+from app.core.mongodb import get_mongo_db
 
 class CreditRepository:
-    def __init__(self, db: AsyncIOMotorDatabase):
+    def __init__(self, db: Any = Depends(get_mongo_db)):
+        self.db = db
         self.collection = db["credits"]
 
     # [저장]

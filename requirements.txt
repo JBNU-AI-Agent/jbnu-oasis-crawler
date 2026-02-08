@@ -9,6 +9,5 @@ pyjwt
 passlib[bcrypt]
 requests
 lxml
-motor 
 dnspython
-pymongo[srv]==3.12
+pymongo>=4.9.0

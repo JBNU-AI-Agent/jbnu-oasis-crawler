@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     DEBUG: bool = True
     
     MONGODB_URL: str
-    MONGODB_DB_NAME: str
+    MONGODB_DB_NAME: str = "jbnu-oasis"
     
     # Logging
     LOG_LEVEL: str = "DEBUG"  # DEBUG, INFO, WARNING, ERROR, CRITICAL

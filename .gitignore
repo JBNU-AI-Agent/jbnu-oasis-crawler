@@ -145,3 +145,6 @@ logs/
 
 # CLAUDE.md (템플릿 사용자가 커스터마이징할 파일)
 CLAUDE.md
+
+# mongo db 생성 파일
+/mongodb_data_container

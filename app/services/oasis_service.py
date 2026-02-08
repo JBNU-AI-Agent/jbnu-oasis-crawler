@@ -4,17 +4,19 @@ from fastapi import Depends
 from app.core.mongodb import get_mongo_db
 from app.repositories.credit_repository import CreditRepository
 from app.repositories.student_info_repository import StudentInfoRepository
-from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.schemas.crawler import CreditResponse
+from typing import Any
 
 class OasisService:
     def __init__(
-        self, client: OasisClient = Depends(),
-        db: AsyncIOMotorDatabase = Depends(get_mongo_db)
-):
+        self, 
+        client: OasisClient = Depends(),
+        student_repo: StudentInfoRepository = Depends(),
+        credit_repo: CreditRepository = Depends()
+    ):
         self.client = client
-        self.credit_repo = CreditRepository(db)
-        self.student_repo = StudentInfoRepository(db)
+        self.student_repo = student_repo
+        self.credit_repo = credit_repo
         
     async def login_and_get_cookies(self, user_id: str, user_pw: str, otp: str) -> dict | None:
         """로그인 비즈니스 로직"""
