@@ -1,9 +1,12 @@
 import requests
 import asyncio
 import xml.etree.ElementTree as ET
+import pandas as pd
+import io
 from functools import partial
 from app.utils import get_logger
 from typing import List, Dict, Optional
+from app.core import constants as const
 
 logger = get_logger("oasis.client")
 
@@ -15,12 +18,7 @@ class OasisClient:
     """
     def __init__(self):
         self.session = requests.Session()
-        self.headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
-            "Referer": "https://oasis.jbnu.ac.kr/com/login.do",
-            "Origin": "https://oasis.jbnu.ac.kr",
-            "X-Requested-With": "XMLHttpRequest"
-        }
+        self.headers = const.LOGIN_HEADER
         self.session.headers.update(self.headers)
 
     async def _async_post(self, url, **kwargs):
@@ -35,27 +33,24 @@ class OasisClient:
         """
         try:
             # --- [Step 1] ID/PW 검증 ---
-            url_login = "https://oasis.jbnu.ac.kr/com/com/sstm/logn/findLoginNXOS.action"
             payload_login = {
                 "rType": "3tier", "loginType": "3tier", "userUid": user_id, "userPwd": user_pw,
                 "langFg": "K", "loginGubun": "O", "loginSystem": "oasis"
             }
-            res1 = await self._async_post(url_login, json=payload_login)
+            res1 = await self._async_post(const.LOGIN_URL, json=payload_login)
             if res1.status_code != 200:
                 logger.warning(f"Step 1 Failed: {res1.status_code}")
                 return None
 
             # --- [Step 2] OTP 프로세스 트리거 (서버 상태 변경용) ---
             # 구글 OTP라도 서버 내부 플래그를 위해 호출해주는 게 안전합니다.
-            url_process = "https://oasis.jbnu.ac.kr/com/com/sstm/logn/otpProcess.action"
-            res2 = await self._async_post(url_process, data={"userId": user_id})
+            res2 = await self._async_post(const.LOGIN_OTP_TRIGGER, data={"userId": user_id})
             if res2.status_code != 200:
                 logger.warning(f"Step 2 Failed: {res2.status_code}")
                 return None
 
             # --- [Step 3] OTP 코드 검증 ---
-            url_check = "https://oasis.jbnu.ac.kr/com/com/sstm/logn/otpCheck.action"
-            res3 = await self._async_post(url_check, data={"userCode": otp})
+            res3 = await self._async_post(const.LOGIN_OTP_CHECK, data={"userCode": otp})
             
             # 쿠키 확인 (성공 시 JSESSIONIDSSO 발급됨)
             if "JSESSIONIDSSO" in self.session.cookies:
@@ -113,17 +108,57 @@ class OasisClient:
             </Parameters>
         </Root>"""
 
-    def _parse_nexacro_xml(self, xml_text: str) -> List[Dict[str, str]]:
-        try:
-            root = ET.fromstring(xml_text)
-            data_list = []
-            for row in root.iter():
-                if row.tag.endswith("Row"):
-                    item = {}
-                    for col in row:
-                        if col.tag.endswith("Col"):
-                            item[col.get("id")] = col.text or ""
-                    if item: data_list.append(item)
-            return data_list
-        except ET.ParseError:
-            return []
+    def _parse_nexacro_xml(self, xml_string: str) -> List[Dict[str, str]]:
+        """
+        어떤 넥사크로 XML 응답이든 파싱해서 Dictionary 형태로 반환합니다.
+        구조: {
+            "Parameters": {파라미터들...},
+            "Datasets": {
+                "DS_성적": [DataFrame],
+                "DS_시간표": [DataFrame],
+                ...
+            }
+        }
+        """
+        root = ET.fromstring(xml_string)
+        
+        # 2. 네임스페이스 제거 로직
+        for el in root.iter():
+            if '}' in el.tag:
+                el.tag = el.tag.split('}', 1)[1]
+                
+        result = {
+            "Parameters": {},
+            "Datasets": {}
+        }
+        
+        # params_node = root.find("Parameters")
+        # if params_node is not None:
+        #     for param in params_node.findall("Parameter"):
+        #         p_id = param.get("id")
+        #         p_val = param.text if param.text else ""
+        #         result["Parameters"][p_id] = p_val
+        
+        for dataset in root.findall("Dataset"):
+            ds_id = dataset.get("id")
+            
+            row_list = []
+            rows = dataset.find("Rows")
+            
+            if rows is not None:
+                for row in rows.findall("Row"):
+                    row_data = {}
+                    for col in row.findall("Col"):
+                        col_id = col.get("id")
+                        col_val = col.text
+                        row_data[col_id] = col_val
+                    row_list.append(row_data)
+            
+        return row_list
+    
+            # if row_list:
+            #     result["Datasets"][ds_id] = pd.DataFrame(row_list)
+            # else:
+            #     result["Datasets"][ds_id] = pd.DataFrame()
+        
+                

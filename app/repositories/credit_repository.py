@@ -8,8 +8,8 @@ class CreditRepository:
         self.db = db
         self.collection = db["credits"]
 
-    # [저장]
     async def save_credits(self, std_no: str, data: list):
+        """학점 정보 저장"""
         document = {
             "std_no": std_no,
             "data": data,
@@ -21,6 +21,6 @@ class CreditRepository:
             upsert=True
         )
     
-    # [조회] 추가된 메서드
     async def get_credits(self, std_no: str) -> dict | None:
+        """학점 정보 조회"""
         return await self.collection.find_one({"std_no": std_no}, {"_id": 0})

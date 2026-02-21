@@ -10,6 +10,7 @@ class StudentInfoRepository:
 
     # [저장]
     async def save_student_info(self, std_no: str, data: dict):
+        """학생 정보 저장"""
         document = {
             "std_no": std_no,
             "data": data,
@@ -23,4 +24,5 @@ class StudentInfoRepository:
 
     # [조회] 추가된 메서드
     async def get_student_info(self, std_no: str) -> dict | None:
+        """학생 정보 조회"""
         return await self.collection.find_one({"std_no": std_no}, {"_id": 0})
