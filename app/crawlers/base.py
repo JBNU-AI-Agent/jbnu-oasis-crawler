@@ -1,8 +1,11 @@
 from abc import ABC, abstractmethod
 from app.core.oasis_client import OasisClient
-from typing import List, Dict, Optional
+from typing import TypeVar, Generic, List
 
-class BaseCrawler(ABC):
+T = TypeVar("T")
+
+
+class BaseCrawler(ABC, Generic[T]):
     @abstractmethod
-    async def crawl(self, std_no: str, client: OasisClient) -> Optional[List[Dict[str, str]]]:
+    async def crawl(self, std_no: str, client: OasisClient) -> T:
         pass

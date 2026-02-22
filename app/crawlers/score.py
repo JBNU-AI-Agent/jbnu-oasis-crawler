@@ -4,7 +4,7 @@ from app.crawlers.base import BaseCrawler
 from app.core.oasis_client import OasisClient
 from app.core.constants import SCORE_URL, SCORE_PAYLOAD
 
-class CreditCrawler(BaseCrawler):
+class CreditCrawler(BaseCrawler[List[dict]]):
     async def crawl(self, std_no: str, client: OasisClient) -> List[dict]:
         # 요청 페이로드 구성 (제공해주신 값 기반)
         # strUnivCd는 단과대 코드 같은데, 일단 3000000001로 고정하거나 

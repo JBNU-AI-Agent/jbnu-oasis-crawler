@@ -1,5 +1,17 @@
-from pydantic import BaseModel, Field
-from typing import Optional, Dict, Any
+from pydantic import BaseModel, Field, BeforeValidator, ConfigDict
+from typing import Optional, Dict, Any, List, Annotated
+
+def empty_to_zero(v):
+    """
+    넥사크로 XML 특성상 값이 없으면 빈 문자열("")로 넘어옵니다.
+    이 값을 float으로 변환하려 하면 에러가 나므로, 빈 값이면 0.0을 반환합니다.
+    """
+    if v == "" or v is None:
+        return 0.0
+    return float(v)
+
+# 이 타입을 쓰면 아무리 이상한 빈 문자가 와도 안전하게 숫자(float)로 바뀝니다.
+SafeFloat = Annotated[float, BeforeValidator(empty_to_zero)]
 
 class LoginRequest(BaseModel):
     user_id: str
@@ -39,6 +51,26 @@ class CreditResponse(BaseModel):
     class Config:
         populate_by_name = True
         extra = "ignore"
-        
-class TakenCourseList(BaseModel):
-    pass
+
+
+# 개별 과목 스키마 (알맹이)
+class ScoreItem(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    # validation_alias: 입력받을 때만 "YY"를 찾고, 출력은 "year"로 나갑니다.
+    year: str = Field(validation_alias="YY", description="수강 년도 (예: 2021)")
+    semester: str = Field(validation_alias="SHTMNM", description="학기명 (예: 1학기)")
+    
+    subject_code: str = Field(validation_alias="SBJTCD", description="과목 코드")
+    subject_name: str = Field(validation_alias="SBJTNM", description="과목명")
+    course_type: str = Field(validation_alias="CPTNFGNM", description="이수 구분 (교양, 전공필수 등)")
+    
+    # 학점과 평점은 안전하게 숫자로 변환합니다.
+    credit: SafeFloat = Field(validation_alias="PNT", description="학점")
+    gpa: SafeFloat = Field(validation_alias="DISGRDSCOR", default=0.0, description="평점 (예: 4.5, Pass 과목은 0.0)")
+    
+    # Pass/Fail 과목 등급
+    grade: str = Field(validation_alias="DISPSCOR", default="", description="최종 등급 (A+, Pass 등)")
+    
+    # 🌟 핵심: 재수강이 아닌 일반 과목은 원본 데이터에 아예 'REMT' 태그가 없습니다.
+    # 따라서 Optional[str]과 default=None으로 설정해 에러를 방지합니다.
+    remarks: Optional[str] = Field(validation_alias="REMT", default=None, description="비고 (재이수신청 등)")

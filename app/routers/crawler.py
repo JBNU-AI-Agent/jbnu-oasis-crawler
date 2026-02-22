@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Depends, Body, HTTPException
 from app.schemas.crawler import StudentInfoResponse, LoginRequest
-from app.schemas.response import SuccessResponse
+from app.schemas.response import SuccessResponse, ErrorResponse
 from app.services.oasis_service import OasisService
 from app.crawlers.base import BaseCrawler
 from app.crawlers.score import CreditCrawler
 from app.crawlers.student_info import StudentInfoCrawler
+from app.crawlers.taken_courses import TakenCourseCrawler
 from typing import List
-from app.schemas.crawler import CreditResponse
+from app.schemas.crawler import CreditResponse, ScoreItem
 
 router = APIRouter()
 
@@ -79,6 +80,34 @@ async def read_credits(
 ):
     """[응답 전용] DB에 저장된 성적 정보를 조회합니다."""
     data = await service.get_credits_from_db(std_no)
+    
+    # 데이터가 없으면 빈 리스트 반환 (혹은 404)
+    return SuccessResponse(data=data)
+
+
+@router.post("/taken-courses/sync", response_model=SuccessResponse[None])
+async def sync_courses(
+    std_no: str = Body(...),
+    cookies: dict = Body(...),
+    service: OasisService = Depends(OasisService),
+    crawler: BaseCrawler = Depends(TakenCourseCrawler)
+):
+    """[저장 전용] 학교 서버에서 수강 과목 정보를 가져와 DB를 업데이트합니다."""
+    success = await service.sync_taken_courses(cookies, crawler, std_no)
+    
+    if not success:
+         return ErrorResponse(message = "No data found or sync failed")
+        
+    return SuccessResponse(message = "Taken courses list synchronized successfully")
+
+@router.get("/taken-courses/{std_no}", response_model=SuccessResponse[List[ScoreItem]])
+async def get_courses(
+    std_no: str,
+    service: OasisService = Depends(OasisService)
+):
+    """[응답 전용] DB에 저장된 수강과목 정보를 조회합니다."""
+    
+    data = await service.get_courses_from_db(std_no)
     
     # 데이터가 없으면 빈 리스트 반환 (혹은 404)
     return SuccessResponse(data=data)

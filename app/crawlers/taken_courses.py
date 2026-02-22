@@ -3,9 +3,10 @@ from typing import List
 from app.crawlers.base import BaseCrawler
 from app.core.oasis_client import OasisClient
 from app.core.constants import COURSES_TAKEN_URL, COURSES_TAKEN_PAYLOAD
+from app.schemas.crawler import ScoreItem
 
-class CreditCrawler(BaseCrawler):
-    async def crawl(self, std_no: str, client: OasisClient) -> List[dict]:
+class TakenCourseCrawler(BaseCrawler[List[ScoreItem]]):
+    async def crawl(self, std_no: str, client: OasisClient) -> List[ScoreItem]:
         # 요청 페이로드 구성 (제공해주신 값 기반)
         # strUnivCd는 단과대 코드 같은데, 일단 3000000001로 고정하거나 
         # StudentInfo에서 가져온 값을 써야 할 수도 있습니다.
@@ -16,4 +17,6 @@ class CreditCrawler(BaseCrawler):
         if not data: 
             return []
         
-        return data[1:3]
+        clean_data = [ScoreItem.model_validate(item) for item in data]
+                
+        return clean_data

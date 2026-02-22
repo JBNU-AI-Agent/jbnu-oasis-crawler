@@ -1,8 +1,6 @@
 import requests
 import asyncio
 import xml.etree.ElementTree as ET
-import pandas as pd
-import io
 from functools import partial
 from app.utils import get_logger
 from typing import List, Dict, Optional
@@ -127,10 +125,10 @@ class OasisClient:
             if '}' in el.tag:
                 el.tag = el.tag.split('}', 1)[1]
                 
-        result = {
-            "Parameters": {},
-            "Datasets": {}
-        }
+        # result = {
+        #     "Parameters": {},
+        #     "Datasets": {}
+        # }
         
         # params_node = root.find("Parameters")
         # if params_node is not None:
@@ -140,7 +138,7 @@ class OasisClient:
         #         result["Parameters"][p_id] = p_val
         
         for dataset in root.findall("Dataset"):
-            ds_id = dataset.get("id")
+            # ds_id = dataset.get("id")
             
             row_list = []
             rows = dataset.find("Rows")
